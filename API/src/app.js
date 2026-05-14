@@ -35,14 +35,32 @@ app.use(helmet());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
+const ALLOWED_ORIGIN = process.env.CLIENT_URL || 'http://localhost:3000';
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (origin === ALLOWED_ORIGIN) return callback(null, true);
+      console.warn(`[CORS] Blocked origin: "${origin}" — expected: "${ALLOWED_ORIGIN}"`);
+      callback(new Error(`CORS: origin "${origin}" not allowed`));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
+
+// ─── Request Timeout (30s) ───────────────────────────────────────────────────
+app.use((req, res, next) => {
+  res.setTimeout(30000, () => {
+    console.error(`[TIMEOUT] ${req.method} ${req.originalUrl} exceeded 30s`);
+    if (!res.headersSent) {
+      res.status(504).json({ success: false, message: 'Request timeout' });
+    }
+  });
+  next();
+});
 
 // ─── Body Parser ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
