@@ -1,6 +1,5 @@
 name: 🌐 Deploy Frontend → Azure Static Web App
 
-# ── Trigger: chỉ chạy khi có thay đổi trong thư mục Front_End/ trên nhánh main ─
 on:
   push:
     branches:
@@ -9,7 +8,6 @@ on:
       - "Front_End/**"
 
 jobs:
-  # ────────────────────────────────────────────────────────────────────────────
   build-and-deploy:
     name: 🏗️ Build Vite + 🚀 Deploy lên Azure Static Web App
     runs-on: ubuntu-latest
@@ -22,32 +20,12 @@ jobs:
           lfs: false
 
       # Tạo file .env tạm trong Front_End/ để Vite inject biến môi trường lúc build
-      # Biến VITE_API_URL phải lưu trong GitHub Secrets
       - name: 📝 Tạo file .env cho Vite build
         working-directory: Front_End
         run: |
           echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > .env
 
-      # Cài Node.js 20 LTS
-      - name: 🟢 Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: Front_End/package-lock.json
-
-      # Cài dependencies
-      - name: 📦 Install dependencies
-        working-directory: Front_End
-        run: npm ci
-
-      # Build Vite app → output ra Front_End/dist/
-      - name: 🔨 Build Vite app
-        working-directory: Front_End
-        run: npm run build
-
-      # Deploy thư mục dist/ lên Azure Static Web App
-      # SWA_DEPLOYMENT_TOKEN lấy từ Azure Portal → Static Web App → Manage deployment token
+      # Deploy: Oryx build bằng custom command (dùng --legacy-peer-deps để fix peer dep conflicts)
       - name: ☁️ Deploy lên Azure Static Web App
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -57,7 +35,7 @@ jobs:
           app_location: "Front_End"
           output_location: "dist"
           api_location: ""
-          skip_app_build: true
+          app_build_command: "npm install --legacy-peer-deps && npm run build"
 
       - name: ✅ Deployment thành công
-        run: echo "✅ Frontend đã được deploy lên Azure Static Web App (swa-library-frontend)"
+        run: echo "✅ Frontend đã được deploy lên Azure Static Web App"
