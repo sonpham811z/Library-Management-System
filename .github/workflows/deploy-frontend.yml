@@ -54,11 +54,10 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.SWA_DEPLOYMENT_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          # Thư mục output của Vite build
           app_location: "Front_End"
           output_location: "dist"
-          # Không có Azure Function API riêng (API dùng Container App)
           api_location: ""
+          skip_app_build: true
 
       - name: ✅ Deployment thành công
         run: echo "✅ Frontend đã được deploy lên Azure Static Web App (swa-library-frontend)"
