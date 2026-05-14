@@ -1,0 +1,101 @@
+name: 🚀 Deploy API → ACR + Azure Container App
+
+# ── Trigger: chỉ chạy khi có thay đổi trong thư mục API/ trên nhánh main ──────
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "API/**"
+
+# ── Biến môi trường dùng chung ────────────────────────────────────────────────
+env:
+  # Tên ACR lấy từ variables.tf → acr_name
+  ACR_NAME: acrlibraryuit23521361
+  ACR_LOGIN_SERVER: acrlibraryuit23521361.azurecr.io
+
+  # Tên Container App & Resource Group lấy từ main.tf
+  CONTAINER_APP_NAME: ca-library-api
+  RESOURCE_GROUP: rg-library-project
+
+  # Tên image trên ACR
+  IMAGE_NAME: library-api
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  build-and-push:
+    name: 🐳 Build & Push Docker image lên ACR
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.short_sha }}
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+
+      # Lấy short SHA để tag image (vd: abc1234)
+      - name: 🏷️ Set image tag (short SHA)
+        id: meta
+        run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      # Đăng nhập vào ACR bằng Service Principal (lưu trong GitHub Secrets)
+      - name: 🔑 Login vào Azure Container Registry
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      # Build image từ API/Dockerfile với context là thư mục API/
+      - name: 🏗️ Build Docker image
+        run: |
+          docker build \
+            --tag ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.short_sha }} \
+            --tag ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest \
+            ./API
+
+      # Push cả 2 tag: SHA cụ thể + latest
+      - name: 📤 Push image lên ACR
+        run: |
+          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.short_sha }}
+          docker push ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+
+  # ────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: ☁️ Deploy lên Azure Container App
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: 🔑 Login vào Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Cập nhật Container App để dùng image mới vừa push
+      - name: 🔄 Update Container App với image mới
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          acrName: ${{ env.ACR_NAME }}
+          containerAppName: ${{ env.CONTAINER_APP_NAME }}
+          resourceGroup: ${{ env.RESOURCE_GROUP }}
+          imageToDeploy: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}
+          # Inject biến môi trường runtime vào Container App
+          # Các giá trị nhạy cảm phải được lưu trong GitHub Secrets
+          environmentVariables: |
+            NODE_ENV=production
+            PORT=3000
+            SUPABASE_URL=secretref:supabase-url
+            SUPABASE_SERVICE_ROLE_KEY=secretref:supabase-service-role-key
+            SUPABASE_ANON_KEY=secretref:supabase-anon-key
+            JWT_SECRET=secretref:jwt-secret
+            JWT_REFRESH_SECRET=secretref:jwt-refresh-secret
+            CLIENT_URL=secretref:client-url
+            CLOUDINARY_CLOUD_NAME=secretref:cloudinary-cloud-name
+            CLOUDINARY_API_KEY=secretref:cloudinary-api-key
+            CLOUDINARY_API_SECRET=secretref:cloudinary-api-secret
+
+      - name: ✅ Deployment thành công
+        run: |
+          echo "✅ API image ${{ needs.build-and-push.outputs.image_tag }} đã được deploy lên ${{ env.CONTAINER_APP_NAME }}"

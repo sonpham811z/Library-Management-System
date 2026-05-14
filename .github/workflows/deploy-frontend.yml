@@ -1,0 +1,64 @@
+name: 🌐 Deploy Frontend → Azure Static Web App
+
+# ── Trigger: chỉ chạy khi có thay đổi trong thư mục Front_End/ trên nhánh main ─
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Front_End/**"
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  build-and-deploy:
+    name: 🏗️ Build Vite + 🚀 Deploy lên Azure Static Web App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          lfs: false
+
+      # Tạo file .env tạm trong Front_End/ để Vite inject biến môi trường lúc build
+      # Biến VITE_API_URL phải lưu trong GitHub Secrets
+      - name: 📝 Tạo file .env cho Vite build
+        working-directory: Front_End
+        run: |
+          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > .env
+
+      # Cài Node.js 20 LTS
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: Front_End/package-lock.json
+
+      # Cài dependencies
+      - name: 📦 Install dependencies
+        working-directory: Front_End
+        run: npm ci
+
+      # Build Vite app → output ra Front_End/dist/
+      - name: 🔨 Build Vite app
+        working-directory: Front_End
+        run: npm run build
+
+      # Deploy thư mục dist/ lên Azure Static Web App
+      # SWA_DEPLOYMENT_TOKEN lấy từ Azure Portal → Static Web App → Manage deployment token
+      - name: ☁️ Deploy lên Azure Static Web App
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.SWA_DEPLOYMENT_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          # Thư mục output của Vite build
+          app_location: "Front_End"
+          output_location: "dist"
+          # Không có Azure Function API riêng (API dùng Container App)
+          api_location: ""
+
+      - name: ✅ Deployment thành công
+        run: echo "✅ Frontend đã được deploy lên Azure Static Web App (swa-library-frontend)"
