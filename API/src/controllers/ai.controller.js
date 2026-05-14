@@ -1,4 +1,4 @@
-const { HumanMessage, AIMessage } = require('@langchain/core/messages');
+const { HumanMessage, AIMessage, SystemMessage } = require('@langchain/core/messages');
 const { createLibraryAgent } = require('../services/ai.agent');
 const docgiaModel = require('../models/docgia.model');
 const { sendSuccess, sendError } = require('../utils/response');
