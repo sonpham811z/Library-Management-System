@@ -29,6 +29,7 @@
 | Tài khoản GitHub + repo đã push code | Repo phải là repo của project này |
 | Tài khoản Supabase | Đã tạo project và có `URL` + các key |
 | Tài khoản Cloudinary | Đã có `cloud_name`, `api_key`, `api_secret` |
+| Tài khoản Groq | Đã tạo `GROQ_API_KEY` (console.groq.com) |
 
 ---
 
@@ -228,6 +229,7 @@ Thêm lần lượt các secret sau:
 | `CLOUDINARY_CLOUD_NAME` | `your_cloud_name` | Cloudinary Dashboard |
 | `CLOUDINARY_API_KEY` | `12345...` | Cloudinary Dashboard |
 | `CLOUDINARY_API_SECRET` | `abc123...` | Cloudinary Dashboard |
+| `GROQ_API_KEY` | `gsk_...` | Groq Console (https://console.groq.com) |
 
 **Tạo JWT Secret ngẫu nhiên (chạy trên terminal):**
 
@@ -258,7 +260,8 @@ az containerapp secret set \
     client-url="<CLIENT_URL>" \
     cloudinary-cloud-name="<CLOUDINARY_CLOUD_NAME>" \
     cloudinary-api-key="<CLOUDINARY_API_KEY>" \
-    cloudinary-api-secret="<CLOUDINARY_API_SECRET>"
+    cloudinary-api-secret="<CLOUDINARY_API_SECRET>" \
+    groq-api-key="<GROQ_API_KEY>"
 ```
 
 > 💡 Thay các placeholder `<...>` bằng giá trị thực. Lệnh này chỉ cần chạy **một lần** — GitHub Actions chỉ cập nhật image, không overwrite secret.
@@ -341,7 +344,8 @@ GitHub Repository Secrets
 ├── CLIENT_URL                 ← https://xxx.azurestaticapps.net
 ├── CLOUDINARY_CLOUD_NAME
 ├── CLOUDINARY_API_KEY
-└── CLOUDINARY_API_SECRET
+├── CLOUDINARY_API_SECRET
+└── GROQ_API_KEY               ← gsk_... (Groq API Key)
 ```
 
 ---

@@ -25,7 +25,7 @@ COPY src ./src
 COPY package.json ./
 
 # Set NODE_ENV to production at build time
-# (Runtime secrets like DB credentials are injected via Container App env vars)
+# (Runtime secrets like DB credentials, GROQ_API_KEY are injected via Container App env vars)
 ENV NODE_ENV=production
 ENV PORT=3000
 

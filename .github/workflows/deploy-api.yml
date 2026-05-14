@@ -95,6 +95,7 @@ jobs:
             CLOUDINARY_CLOUD_NAME=secretref:cloudinary-cloud-name
             CLOUDINARY_API_KEY=secretref:cloudinary-api-key
             CLOUDINARY_API_SECRET=secretref:cloudinary-api-secret
+            GROQ_API_KEY=secretref:groq-api-key
 
       - name: ✅ Deployment thành công
         run: |
