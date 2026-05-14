@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { AiChatWidget } from '../ai/AiChatWidget';
 
 const PAGE_TITLES = {
   // Admin paths
@@ -44,6 +45,7 @@ export const MainLayout = () => {
           <Outlet />
         </main>
       </div>
+      <AiChatWidget />
     </div>
   );
 };

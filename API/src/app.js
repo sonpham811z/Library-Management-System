@@ -26,6 +26,7 @@ const reportRoutes            = require('./routes/report.routes');
 const fineRoutes              = require('./routes/fine.routes');
 const phieuthuRoutes          = require('./routes/phieuthu.routes');
 const datchoRoutes            = require('./routes/datcho.routes');
+const aiRoutes                = require('./routes/ai.routes');
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use('/api/reports',           reportRoutes);
 app.use('/api/fines',             fineRoutes);
 app.use('/api/phieuthu',          phieuthuRoutes);
 app.use('/api/datcho',            datchoRoutes);
+app.use('/api/ai',                 aiRoutes);
 
 // ─── Health Check ────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {

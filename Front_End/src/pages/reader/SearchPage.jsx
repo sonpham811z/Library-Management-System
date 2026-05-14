@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Search, BookMarked, BookOpen } from 'lucide-react';
+import { Search, BookMarked, BookOpen, Bot } from 'lucide-react';
 import { tuasachApi } from '../../api/tuasach.api';
 import { theloaiApi } from '../../api/theloai.api';
 import { sachApi } from '../../api/sach.api';
@@ -7,6 +7,7 @@ import { datchoApi } from '../../api/datcho.api';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Pagination } from '../../components/common/Table';
+import { openAiChat } from '../../components/ai/AiChatWidget';
 import toast from 'react-hot-toast';
 
 const BookCard = ({ book, onViewDetail }) => {
@@ -298,6 +299,40 @@ export const SearchPage = () => {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-400">Không thể tải tình trạng sách.</p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openAiChat({
+                    prompt: `Hãy tư vấn nhanh cho tôi về tựa sách "${selectedBook.tentuasach}" (mã ${selectedBook.matuasach}). Nếu cần, hãy kiểm tra xem có nên đặt trước hay không.`,
+                    context: {
+                      matuasach: selectedBook.matuasach,
+                      tentuasach: selectedBook.tentuasach,
+                      theloai: selectedBook.theloai?.tentheloai || null,
+                    },
+                  })}
+                  className="gap-2"
+                >
+                  <Bot size={14} />
+                  Hỏi AI về sách này
+                </Button>
+
+                {selectedBook?.theloai?.tentheloai && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openAiChat({
+                      prompt: `Tôi thích sách thể loại ${selectedBook.theloai.tentheloai}. Hãy gợi ý thêm sách phù hợp trong thư viện.`,
+                      context: { theloai: selectedBook.theloai.tentheloai },
+                    })}
+                    className="gap-2"
+                  >
+                    <Search size={14} />
+                    Tìm thêm sách cùng thể loại
+                  </Button>
                 )}
               </div>
             </div>
