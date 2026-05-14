@@ -1,14 +1,14 @@
 const { createLibraryTools } = require('./ai.tools');
 
 const createLibraryAgent = async (userData = {}) => {
-  const [{ createReactAgent }, { ChatGoogleGenerativeAI }] = await Promise.all([
+  const [{ createReactAgent }, { ChatGroq }] = await Promise.all([
     import('@langchain/langgraph/prebuilt'),
-    import('@langchain/google-genai'),
+    import('@langchain/groq'),
   ]);
 
-  const llm = new ChatGoogleGenerativeAI({
-    model: 'gemini-flash-latest',
-    apiKey: process.env.GEMINI_API_KEY,
+  const llm = new ChatGroq({
+    model: 'openai/gpt-oss-120b',
+    apiKey: process.env.GROQ_API_KEY,
     temperature: 0.4,
   });
 

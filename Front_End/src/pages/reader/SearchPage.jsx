@@ -7,7 +7,7 @@ import { datchoApi } from '../../api/datcho.api';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Pagination } from '../../components/common/Table';
-import { openAiChat } from '../../components/ai/AiChatWidget';
+import { openAiChat } from '../../components/ai/aiChatUtils';
 import toast from 'react-hot-toast';
 
 const BookCard = ({ book, onViewDetail }) => {

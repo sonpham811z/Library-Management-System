@@ -2,7 +2,7 @@ import { Bell, Bot, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { getRoleBadgeColor } from '../../utils/format';
 import { Badge } from '../common/Badge';
-import { openAiChat } from '../ai/AiChatWidget';
+import { openAiChat } from '../ai/aiChatUtils';
 
 export const Header = ({ title }) => {
   const { user } = useAuth();

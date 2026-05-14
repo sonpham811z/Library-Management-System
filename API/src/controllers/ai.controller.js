@@ -105,6 +105,17 @@ const handleAgentChat = async (req, res, next) => {
       },
     });
   } catch (error) {
+    const message = error?.message || '';
+
+    // Gemini free-tier quota exceeded (429)
+    if (message.includes('429') || message.includes('Too Many Requests') || message.includes('quota')) {
+      return sendError(
+        res,
+        'Trợ lý AI đang bận (đã đạt giới hạn miễn phí hôm nay). Vui lòng thử lại sau ít phút.',
+        429,
+      );
+    }
+
     next(error);
   }
 };
