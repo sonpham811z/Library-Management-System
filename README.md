@@ -1,6 +1,6 @@
 [![UIT Logo](https://i.imgur.com/WmMnSRt.png)](https://www.uit.edu.vn/ "Trường Đại học Công nghệ Thông tin")
 
-# **QUẢN LÝ DỰ ÁN CÔNG NGHỆ THÔNG TIN**
+# **Nhập môn Công nghệ Phần mềm**
 
 ## Hệ thống Quản lý Thư viện — Library Heaven
 
