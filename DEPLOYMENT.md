@@ -212,9 +212,7 @@ Thêm lần lượt các secret sau:
 
 ### 🌐 Nhóm Frontend
 
-| Secret Name | Giá trị | Ghi chú |
-|---|---|---|
-| `VITE_API_URL` | `https://ca-library-api.xxx.eastasia.azurecontainerapps.io` | URL lấy từ bước 5.3 |
+| `VITE_API_URL` | `https://ca-library-api.xxx.eastasia.azurecontainerapps.io/api` | URL lấy từ bước 5.3 (nhớ thêm `/api` ở cuối) |
 
 ### 🗄️ Nhóm API / Backend
 
@@ -335,7 +333,7 @@ GitHub Repository Secrets
 ├── ACR_USERNAME               ← acrlibraryuit23521361
 ├── ACR_PASSWORD               ← ACR admin password
 ├── SWA_DEPLOYMENT_TOKEN       ← Azure Static Web App deploy token
-├── VITE_API_URL               ← https://ca-library-api.xxx.azurecontainerapps.io
+├── VITE_API_URL               ← https://ca-library-api.xxx.azurecontainerapps.io/api
 ├── SUPABASE_URL
 ├── SUPABASE_SERVICE_ROLE_KEY
 ├── SUPABASE_ANON_KEY
