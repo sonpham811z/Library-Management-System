@@ -50,4 +50,49 @@ const remove = async (maTuaSach) => {
   if (error) throw error;
 };
 
-module.exports = { findById, findAll, create, update, remove };
+const search = async ({ titleSearch, authorSearch, genreSearch, page = 1, limit = 8 } = {}) => {
+  let tuasachIds = null;
+
+  if (authorSearch) {
+    const { data: authors } = await supabase
+      .from('tacgia')
+      .select('matacgia')
+      .ilike('tentacgia', `%${authorSearch}%`);
+
+    if (!authors?.length) return { data: [], count: 0 };
+
+    const { data: ctRecords } = await supabase
+      .from('ct_tacgia')
+      .select('matuasach')
+      .in('matacgia', authors.map((a) => a.matacgia));
+
+    if (!ctRecords?.length) return { data: [], count: 0 };
+    tuasachIds = [...new Set(ctRecords.map((r) => r.matuasach))];
+  }
+
+  let query = supabase
+    .from(TABLE)
+    .select('matuasach, tentuasach, anhbia, matheloai, theloai(tentheloai), ct_tacgia(tacgia(tentacgia))', { count: 'exact' });
+
+  if (titleSearch) query = query.ilike('tentuasach', `%${titleSearch}%`);
+  if (tuasachIds) query = query.in('matuasach', tuasachIds);
+
+  if (genreSearch) {
+    const { data: genres } = await supabase
+      .from('theloai')
+      .select('matheloai')
+      .ilike('tentheloai', `%${genreSearch}%`);
+
+    if (!genres?.length) return { data: [], count: 0 };
+    query = query.in('matheloai', genres.map((g) => g.matheloai));
+  }
+
+  const from = (page - 1) * limit;
+  query = query.range(from, from + limit - 1).order('matuasach', { ascending: false });
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+  return { data: data || [], count: count || 0 };
+};
+
+module.exports = { findById, findAll, search, create, update, remove };

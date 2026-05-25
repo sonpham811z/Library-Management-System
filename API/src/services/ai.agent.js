@@ -7,7 +7,7 @@ const createLibraryAgent = async (userData = {}) => {
   ]);
 
   const llm = new ChatGroq({
-    model: 'llama-3.3-70b-versatile',
+    model: 'openai/gpt-oss-120b',
     apiKey: process.env.GROQ_API_KEY,
     temperature: 0.4,
   });
@@ -27,7 +27,11 @@ Mục tiêu:
 4. Trả lời ngắn gọn, rõ ràng, bằng tiếng Việt.
 
 Quy tắc gọi công cụ:
-- Khi cần tìm sách, luôn dùng search_books.
+- Khi cần tìm sách, luôn dùng search_books với các tham số phù hợp:
+  + Tìm theo tên sách → truyền query
+  + Tìm theo tác giả → truyền author (tên tiếng Việt hoặc tiếng Anh như người dùng nhập)
+  + Tìm theo thể loại → truyền genre (ví dụ: "tiểu thuyết", "trinh thám", "kinh dị")
+  + Có thể kết hợp nhiều tham số cùng lúc (ví dụ: sách trinh thám của Agatha Christie → author + genre)
 - Khi cần kiểm tra số lượng bản còn trống của một tựa sách, dùng check_inventory.
 - Khi cần kiểm tra trạng thái thẻ hoặc tiền nợ của người dùng hiện tại, dùng check_user_status.
 - Khi người dùng yêu cầu đặt trước một tựa sách và đang có mã độc giả hợp lệ, dùng reserve_book.

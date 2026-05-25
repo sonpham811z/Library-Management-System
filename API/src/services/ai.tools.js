@@ -33,29 +33,37 @@ const serializeTitle = async (book) => {
 };
 
 const createSearchBooksTool = () => tool(
-  async ({ query }) => {
+  async ({ query, author, genre }) => {
     try {
-      const trimmedQuery = String(query || '').trim();
-      if (!trimmedQuery) {
-        return JSON.stringify({ type: 'search_results', query: '', items: [], message: 'Vui lòng nhập nội dung cần tìm.' });
+      const titleSearch = query ? String(query).trim() : undefined;
+      const authorSearch = author ? String(author).trim() : undefined;
+      const genreSearch = genre ? String(genre).trim() : undefined;
+
+      if (!titleSearch && !authorSearch && !genreSearch) {
+        return JSON.stringify({ type: 'search_results', items: [], message: 'Vui lòng nhập nội dung cần tìm.' });
       }
 
-      const { data } = await tuasachModel.findAll({ page: 1, limit: 8, search: trimmedQuery });
+      const { data } = await tuasachModel.search({ titleSearch, authorSearch, genreSearch, page: 1, limit: 8 });
       const titles = await Promise.all((data || []).map((book) => serializeTitle(book)));
+
+      const queryLabel = [
+        titleSearch && `"${titleSearch}"`,
+        authorSearch && `tác giả "${authorSearch}"`,
+        genreSearch && `thể loại "${genreSearch}"`,
+      ].filter(Boolean).join(', ');
 
       return JSON.stringify({
         type: 'search_results',
-        query: trimmedQuery,
+        query: queryLabel,
         items: titles,
         message: titles.length > 0
-          ? `Tìm thấy ${titles.length} tựa sách phù hợp.`
-          : 'Chưa tìm thấy tựa sách phù hợp trong thư viện.',
+          ? `Tìm thấy ${titles.length} tựa sách phù hợp với ${queryLabel}.`
+          : `Chưa tìm thấy tựa sách phù hợp với ${queryLabel} trong thư viện.`,
       });
     } catch (error) {
       console.error('Lỗi searchBooksTool:', error);
       return JSON.stringify({
         type: 'search_results',
-        query: String(query || ''),
         items: [],
         message: 'Có lỗi khi tìm sách, bạn thử lại sau nhé.',
       });
@@ -63,9 +71,11 @@ const createSearchBooksTool = () => tool(
   },
   {
     name: 'search_books',
-    description: 'Tìm kiếm các tựa sách trong thư viện theo mô tả tự nhiên, tên sách, tác giả hoặc chủ đề.',
+    description: 'Tìm kiếm tựa sách trong thư viện. Hỗ trợ tìm theo tên sách, tên tác giả và thể loại — có thể kết hợp nhiều tiêu chí cùng lúc.',
     schema: z.object({
-      query: z.string().min(1).describe('Nội dung hoặc chủ đề sách mà người dùng đang tìm kiếm'),
+      query: z.string().optional().describe('Tên sách hoặc từ khóa nội dung (để trống nếu chỉ tìm theo tác giả/thể loại)'),
+      author: z.string().optional().describe('Tên tác giả cần tìm (ví dụ: Nguyễn Nhật Ánh, Tô Hoài)'),
+      genre: z.string().optional().describe('Thể loại sách cần tìm (ví dụ: tiểu thuyết, trinh thám, khoa học viễn tưởng)'),
     }),
   }
 );
