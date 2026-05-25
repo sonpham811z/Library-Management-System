@@ -1,0 +1,63 @@
+# Root-level ignores for both API and Front_End projects
+
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+API/node_modules/
+Front_End/node_modules/
+
+# ─── Build outputs ────────────────────────────────────────────────────────────
+API/dist/
+Front_End/dist/
+Front_End/dist-ssr/
+
+# ─── Environment / Secret files ───────────────────────────────────────────────
+API/.env
+Front_End/.env
+*.env.local
+*.local
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ─── Editors / OS ─────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ─── Terraform ────────────────────────────────────────────────────────────────
+# State files — chứa sensitive data (passwords, keys), KHÔNG commit lên repo
+infrastructure/terraform/.terraform/
+infrastructure/terraform/.terraform.lock.hcl
+infrastructure/terraform/terraform.tfstate
+infrastructure/terraform/terraform.tfstate.backup
+infrastructure/terraform/terraform.tfstate.*.backup
+
+# Override files — thường dùng để override local, không nên commit
+infrastructure/terraform/override.tf
+infrastructure/terraform/override.tf.json
+infrastructure/terraform/*_override.tf
+infrastructure/terraform/*_override.tf.json
+
+# Terraform plan output (có thể chứa sensitive values)
+infrastructure/terraform/*.tfplan
+
+# Crash log từ Terraform
+infrastructure/terraform/crash.log
+
+# Biến môi trường local cho Terraform (nếu dùng .tfvars chứa secrets)
+infrastructure/terraform/*.tfvars
+infrastructure/terraform/*.tfvars.json
+# Ngoại lệ: cho phép commit file example (không chứa giá trị thật)
+!infrastructure/terraform/*.tfvars.example

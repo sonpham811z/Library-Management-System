@@ -1,0 +1,41 @@
+name: 🌐 Deploy Frontend → Azure Static Web App
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Front_End/**"
+
+jobs:
+  build-and-deploy:
+    name: 🏗️ Build Vite + 🚀 Deploy lên Azure Static Web App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          lfs: false
+
+      # Tạo file .env tạm trong Front_End/ để Vite inject biến môi trường lúc build
+      - name: 📝 Tạo file .env cho Vite build
+        working-directory: Front_End
+        run: |
+          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > .env
+
+      # Deploy: Oryx build bằng custom command (dùng --legacy-peer-deps để fix peer dep conflicts)
+      - name: ☁️ Deploy lên Azure Static Web App
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.SWA_DEPLOYMENT_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "Front_End"
+          output_location: "dist"
+          api_location: ""
+          app_build_command: "npm install --legacy-peer-deps && npm run build"
+
+      - name: ✅ Deployment thành công
+        run: echo "✅ Frontend đã được deploy lên Azure Static Web App"
