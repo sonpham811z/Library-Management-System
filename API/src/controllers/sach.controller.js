@@ -17,15 +17,16 @@ const search = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-/** GET /api/sach?matuasach=X&trangthai=&page=1&limit=20 */
+/** GET /api/sach?matuasach=X&trangthai=&search=&page=1&limit=20 */
 const getAll = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, matuasach, trangthai } = req.query;
+    const { page = 1, limit = 20, matuasach, trangthai, search } = req.query;
     const { data, count } = await sachModel.findAll({
       page: +page,
       limit: +limit,
       maTuaSach: matuasach ? +matuasach : undefined,
       trangThai: trangthai || undefined,
+      search:    search    || undefined,
     });
     return sendPaginated(res, data, count, page, limit);
   } catch (err) { next(err); }

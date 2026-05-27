@@ -167,7 +167,8 @@ const createPhieuMuon = async (madocgia, masachlist) => {
     };
   }
 
-  // ④ Book availability
+  // ④ Book availability + collect snapshot data
+  const sachWithSnapshots = [];
   for (const maSach of uniqueList) {
     const sach = await sachModel.findById(maSach);
     if (sach.trangthai !== TRANG_THAI_SACH.CO_SAN) {
@@ -176,13 +177,21 @@ const createPhieuMuon = async (madocgia, masachlist) => {
         message: `Sách #${maSach} "${sach.tuasach?.tentuasach || ''}" hiện không có sẵn (${sach.trangthai}).`,
       };
     }
+    // Capture snapshot to protect borrow history from future book edits
+    sachWithSnapshots.push({
+      masach:              maSach,
+      tentuasach_snapshot: sach.tuasach?.tentuasach || null,
+      anhbia_snapshot:     sach.tuasach?.anhbia     || null,
+      nhaxb_snapshot:      sach.nhaxb               || null,
+      namxb_snapshot:      sach.namxb               || null,
+    });
   }
 
   // ── Create records ─────────────────────────────────────────────────────────
   const hanTra    = addDays(today, soNgayMuon);
   const phieumuon = await phieumuonModel.create({ madocgia, ngaymuon: today, hantra: hanTra });
 
-  await ctPhieuMuonModel.addMany(phieumuon.maphieumuon, uniqueList);
+  await ctPhieuMuonModel.addMany(phieumuon.maphieumuon, sachWithSnapshots);
 
   for (const maSach of uniqueList) {
     await sachModel.setTrangThai(maSach, TRANG_THAI_SACH.DA_MUON);

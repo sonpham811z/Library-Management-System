@@ -95,8 +95,20 @@ CREATE TABLE PHIEUMUON (
 CREATE TABLE CT_PHIEUMUON (
     MaPhieuMuon INT REFERENCES PHIEUMUON(MaPhieuMuon) ON DELETE CASCADE,
     MaSach INT REFERENCES SACH(MaSach),
+    -- Snapshot tại thời điểm mượn: đảm bảo lịch sử không bị ảnh hưởng khi sửa thông tin sách
+    TenTuaSach_Snapshot VARCHAR(500),
+    AnhBia_Snapshot TEXT,
+    NhaXB_Snapshot VARCHAR(255),
+    NamXB_Snapshot INT,
     PRIMARY KEY (MaPhieuMuon, MaSach)
 );
+
+-- Migration cho database đã có sẵn:
+-- ALTER TABLE CT_PHIEUMUON
+--     ADD COLUMN IF NOT EXISTS TenTuaSach_Snapshot VARCHAR(500),
+--     ADD COLUMN IF NOT EXISTS AnhBia_Snapshot TEXT,
+--     ADD COLUMN IF NOT EXISTS NhaXB_Snapshot VARCHAR(255),
+--     ADD COLUMN IF NOT EXISTS NamXB_Snapshot INT;
 
 CREATE TABLE PHIEUTRA (
     MaPhieuTra SERIAL PRIMARY KEY,

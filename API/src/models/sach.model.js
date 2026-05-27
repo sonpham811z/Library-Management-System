@@ -22,18 +22,36 @@ const findById = async (maSach) => {
 };
 
 const findAll = async ({ page = 1, limit = 20, maTuaSach, trangThai, search } = {}) => {
+  let tuasachIds = null;
+
+  if (search) {
+    const id = parseInt(search, 10);
+    if (!isNaN(id)) {
+      // Exact copy ID search — return immediately for speed
+      const { data, error, count } = await supabase
+        .from(TABLE)
+        .select('masach, matuasach, namxb, nhaxb, ngaynhap, trigia, trangthai, tuasach(tentuasach, anhbia)', { count: 'exact' })
+        .eq('masach', id);
+      if (error) throw error;
+      return { data, count };
+    }
+    // Text search: find tuasach IDs whose title matches, then filter sach
+    const { data: titles } = await supabase
+      .from('tuasach')
+      .select('matuasach')
+      .ilike('tentuasach', `%${search}%`)
+      .limit(200);
+    tuasachIds = (titles || []).map((t) => t.matuasach);
+    if (tuasachIds.length === 0) return { data: [], count: 0 };
+  }
+
   let query = supabase
     .from(TABLE)
     .select('masach, matuasach, namxb, nhaxb, ngaynhap, trigia, trangthai, tuasach(tentuasach, anhbia)', { count: 'exact' });
 
-  if (maTuaSach) query = query.eq('matuasach', maTuaSach);
-  if (trangThai) query = query.eq('trangthai', trangThai);
-  if (search) {
-    // search by title via join is done via ilike on tuasach name — requires RPC for true join filter
-    // Basic: filter by masach if numeric, otherwise skip
-    const id = parseInt(search);
-    if (!isNaN(id)) query = query.eq('masach', id);
-  }
+  if (maTuaSach)   query = query.eq('matuasach', maTuaSach);
+  if (trangThai)   query = query.eq('trangthai', trangThai);
+  if (tuasachIds)  query = query.in('matuasach', tuasachIds);
 
   const from = (page - 1) * limit;
   query = query.range(from, from + limit - 1).order('masach', { ascending: false });

@@ -16,42 +16,39 @@ import {
   User,
   Tag,
   Layers,
+  Library,
 } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 
 const adminNav = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/books", icon: BookOpen, label: "Quản lý Sách" },
-  { to: "/users", icon: Users, label: "Người dùng" },
-
-  // ✅ FIX ICON 3 MỤC NÀY
-  { to: "/authors", icon: User, label: "Tác giả" },
-  { to: "/reader-categories", icon: Layers, label: "Loại độc giả" },
-  { to: "/categories", icon: Tag, label: "Thể loại" },
-
-  { to: "/reader-cards", icon: CreditCard, label: "Thẻ Độc giả" },
-  { to: "/borrows", icon: BookCopy, label: "Phiếu Mượn/Trả" },
-  { to: "/reservations", icon: BookMarked, label: "Đặt trước" },
-  { to: "/fines", icon: DollarSign, label: "Thu tiền phạt" },
-  { to: "/reports", icon: BarChart3, label: "Báo cáo" },
-  { to: "/policies", icon: Settings, label: "Quy định" },
+  { to: "/dashboard",    icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/books",        icon: BookOpen,        label: "Tựa sách" },
+  { to: "/book-copies",  icon: Library,         label: "Bản sao sách" },
+  { to: "/users",        icon: Users,           label: "Người dùng" },
+  { to: "/authors",      icon: User,            label: "Tác giả" },
+  { to: "/reader-categories", icon: Layers,     label: "Loại độc giả" },
+  { to: "/categories",   icon: Tag,             label: "Thể loại" },
+  { to: "/reader-cards", icon: CreditCard,      label: "Thẻ Độc giả" },
+  { to: "/borrows",      icon: BookCopy,        label: "Phiếu Mượn/Trả" },
+  { to: "/reservations", icon: BookMarked,      label: "Đặt trước" },
+  { to: "/fines",        icon: DollarSign,      label: "Thu tiền phạt" },
+  { to: "/reports",      icon: BarChart3,       label: "Báo cáo" },
+  { to: "/policies",     icon: Settings,        label: "Quy định" },
 ];
 
 const staffNav = [
-  { to: "/staff/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/staff/books", icon: BookOpen, label: "Quản lý Sách" },
-  { to: "/staff/reader-cards", icon: CreditCard, label: "Thẻ Độc giả" },
-
-  // ✅ FIX ICON 3 MỤC NÀY
-  { to: "/staff/reader-categories", icon: Layers, label: "Loại độc giả" },
-  { to: "/staff/authors", icon: User, label: "Tác giả" },
-  { to: "/staff/categories", icon: Tag, label: "Thể loại" },
-
-  { to: "/staff/borrows", icon: BookCopy, label: "Phiếu Mượn/Trả" },
-  { to: "/staff/reservations", icon: BookMarked, label: "Đặt trước" },
-  { to: "/staff/fines", icon: DollarSign, label: "Thu tiền phạt" },
-  { to: "/staff/reports", icon: BarChart3, label: "Báo cáo" },
+  { to: "/staff/dashboard",         icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/staff/books",             icon: BookOpen,        label: "Tựa sách" },
+  { to: "/staff/book-copies",       icon: Library,         label: "Bản sao sách" },
+  { to: "/staff/reader-cards",      icon: CreditCard,      label: "Thẻ Độc giả" },
+  { to: "/staff/reader-categories", icon: Layers,          label: "Loại độc giả" },
+  { to: "/staff/authors",           icon: User,            label: "Tác giả" },
+  { to: "/staff/categories",        icon: Tag,             label: "Thể loại" },
+  { to: "/staff/borrows",           icon: BookCopy,        label: "Phiếu Mượn/Trả" },
+  { to: "/staff/reservations",      icon: BookMarked,      label: "Đặt trước" },
+  { to: "/staff/fines",             icon: DollarSign,      label: "Thu tiền phạt" },
+  { to: "/staff/reports",           icon: BarChart3,       label: "Báo cáo" },
 ];
 
 const readerNav = [

@@ -7,7 +7,18 @@ const TABLE = 'phieumuon';
 const findById = async (maPhieuMuon) => {
   const { data, error } = await supabase
     .from(TABLE)
-    .select('*, docgia(hoten, email), ct_phieumuon(masach, sach(matuasach, trangthai, tuasach(tentuasach)))')
+    .select(`
+      *,
+      docgia(hoten, email),
+      ct_phieumuon(
+        masach,
+        tentuasach_snapshot,
+        anhbia_snapshot,
+        nhaxb_snapshot,
+        namxb_snapshot,
+        sach(matuasach, trangthai, namxb, nhaxb, tuasach(tentuasach, anhbia))
+      )
+    `)
     .eq('maphieumuon', maPhieuMuon)
     .single();
   if (error) throw error;
@@ -17,7 +28,19 @@ const findById = async (maPhieuMuon) => {
 const findAll = async ({ page = 1, limit = 20, maDocGia } = {}) => {
   let query = supabase
     .from(TABLE)
-    .select('maphieumuon, madocgia, ngaymuon, hantra, docgia(hoten), ct_phieumuon(masach, sach(matuasach, trangthai, tuasach(tentuasach)))', { count: 'exact' });
+    .select(
+      `maphieumuon, madocgia, ngaymuon, hantra,
+       docgia(hoten),
+       ct_phieumuon(
+         masach,
+         tentuasach_snapshot,
+         anhbia_snapshot,
+         nhaxb_snapshot,
+         namxb_snapshot,
+         sach(matuasach, trangthai, tuasach(tentuasach, anhbia))
+       )`,
+      { count: 'exact' }
+    );
 
   if (maDocGia) query = query.eq('madocgia', maDocGia);
 
@@ -36,9 +59,26 @@ const create = async ({ madocgia, ngaymuon, hantra }) => {
   return data;
 };
 
+/**
+ * Update a phieumuon record.
+ * Currently only HanTra (due date) can be changed after creation.
+ * @param {number} maPhieuMuon
+ * @param {{ hantra?: string }} payload
+ */
+const update = async (maPhieuMuon, payload) => {
+  const { data, error } = await supabase
+    .from(TABLE)
+    .update(payload)
+    .eq('maphieumuon', maPhieuMuon)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
 const remove = async (maPhieuMuon) => {
   const { error } = await supabase.from(TABLE).delete().eq('maphieumuon', maPhieuMuon);
   if (error) throw error;
 };
 
-module.exports = { findById, findAll, create, remove };
+module.exports = { findById, findAll, create, update, remove };
