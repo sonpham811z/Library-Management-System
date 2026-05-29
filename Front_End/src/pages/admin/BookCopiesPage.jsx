@@ -40,6 +40,7 @@ const EMPTY_FORM = {
   nhaxb:    '',
   ngaynhap: new Date().toISOString().split('T')[0],
   trigia:   '',
+  soluong:  1,
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -128,17 +129,19 @@ export const BookCopiesPage = () => {
       toast.error('Năm XB, ngày nhập và trị giá là bắt buộc');
       return;
     }
+    const qty = Math.max(1, Math.min(100, +form.soluong || 1));
     setSaving(true);
     try {
       if (modal.mode === 'create') {
-        await sachApi.create({
+        const payload = {
           matuasach: +maTuaSach,
           namxb:     +form.namxb,
           nhaxb:     form.nhaxb || null,
           ngaynhap:  form.ngaynhap,
           trigia:    +form.trigia,
-        });
-        toast.success('Nhập bản sao sách thành công');
+        };
+        await Promise.all(Array.from({ length: qty }, () => sachApi.create(payload)));
+        toast.success(`Nhập ${qty} bản sao sách thành công`);
       } else {
         await sachApi.update(modal.data.masach, {
           namxb:    +form.namxb,
@@ -409,6 +412,17 @@ export const BookCopiesPage = () => {
               onChange={(e) => setForm((p) => ({ ...p, trigia: e.target.value }))}
               placeholder="85000"
             />
+            {modal.mode === 'create' && (
+              <Input
+                label="Số lượng bản sao *"
+                type="number"
+                min="1"
+                max="100"
+                value={form.soluong}
+                onChange={(e) => setForm((p) => ({ ...p, soluong: e.target.value }))}
+                placeholder="1"
+              />
+            )}
           </div>
 
           <p className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
@@ -422,7 +436,9 @@ export const BookCopiesPage = () => {
             Hủy
           </Button>
           <Button onClick={handleSave} loading={saving}>
-            {modal.mode === 'create' ? 'Nhập sách' : 'Lưu thay đổi'}
+            {modal.mode === 'create'
+              ? `Nhập ${+form.soluong > 1 ? `${form.soluong} bản sao` : 'sách'}`
+              : 'Lưu thay đổi'}
           </Button>
         </div>
       </Modal>

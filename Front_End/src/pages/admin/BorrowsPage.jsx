@@ -53,6 +53,10 @@ const PhieuMuonTab = () => {
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
   const [loading, setLoading]       = useState(true);
 
+  // ── Bộ lọc ────────────────────────────────────────────────────────────────
+  const [search, setSearch]             = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
   // ── Modal Lập phiếu ────────────────────────────────────────────────────────
   const [createModal, setCreateModal] = useState(false);
   const [readerQuery, setReaderQuery]     = useState('');
@@ -74,12 +78,16 @@ const PhieuMuonTab = () => {
   const fetchAll = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      const { data } = await phieumuonApi.getAll({ page, limit: 15 });
+      const { data } = await phieumuonApi.getAll({
+        page, limit: 15,
+        search:    search    || undefined,
+        trangthai: statusFilter || undefined,
+      });
       setRows(data.data);
       setPagination({ page: data.pagination.page, totalPages: data.pagination.totalPages });
     } catch { toast.error('Không thể tải phiếu mượn'); }
     finally  { setLoading(false); }
-  }, []);
+  }, [search, statusFilter]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -270,13 +278,35 @@ const PhieuMuonTab = () => {
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <>
-      {isAdminOrStaff && (
-        <div className="flex justify-end mb-3">
-          <Button size="sm" onClick={() => setCreateModal(true)}>
+      <div className="flex flex-wrap gap-3 items-center justify-between mb-3">
+        <div className="flex gap-2 flex-1 min-w-0">
+          <div className="relative flex-1 max-w-sm">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tìm theo tên độc giả hoặc mã phiếu..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-3 py-2 w-full border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border border-gray-300 rounded-lg text-sm px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shrink-0"
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="Đang mượn">Đang mượn</option>
+            <option value="Quá hạn">Quá hạn</option>
+            <option value="Đã trả">Đã trả</option>
+          </select>
+        </div>
+        {isAdminOrStaff && (
+          <Button size="sm" onClick={() => setCreateModal(true)} className="shrink-0">
             <Plus size={15} /> Lập phiếu mượn
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       <Table columns={columns} data={rows} loading={loading} />
       <Pagination page={pagination.page} totalPages={pagination.totalPages} onPageChange={fetchAll} />
@@ -608,6 +638,10 @@ const PhieuTraTab = () => {
   const [loadingActive, setLoadingActive]   = useState(false);
   const [saving, setSaving]                 = useState(false);
 
+  // ── Modal chi tiết phiếu trả ───────────────────────────────────────────────
+  const [detailModal, setDetailModal]     = useState({ open: false, data: null });
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
   const fetchAll = useCallback(async (page = 1) => {
     setLoading(true);
     try {
@@ -660,6 +694,20 @@ const PhieuTraTab = () => {
     setSelectedIds([]);
   };
 
+  const openDetail = async (row) => {
+    setDetailModal({ open: true, data: null });
+    setLoadingDetail(true);
+    try {
+      const { data } = await phieutraApi.getById(row.maphieutra);
+      setDetailModal({ open: true, data: data.data });
+    } catch {
+      toast.error('Không thể tải chi tiết phiếu trả');
+      setDetailModal({ open: false, data: null });
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
   const handleCreate = async () => {
     if (saving) return;
     if (!selectedReader)          { toast.error('Vui lòng chọn độc giả'); return; }
@@ -685,7 +733,10 @@ const PhieuTraTab = () => {
   };
 
   const columns = [
-    { key: 'maphieutra',  title: 'Mã PT' },
+    {
+      key: 'maphieutra', title: 'Mã PT',
+      render: (v) => <span className="font-mono text-xs text-gray-500">#{v}</span>,
+    },
     { key: 'madocgia',    title: 'Mã ĐG' },
     { key: 'docgia',      title: 'Độc giả', render: (v) => v?.hoten ?? '—' },
     { key: 'ngaytra',     title: 'Ngày trả', render: formatDate },
@@ -696,6 +747,18 @@ const PhieuTraTab = () => {
         : <span className="text-green-600">0 đ</span>,
     },
     { key: 'ct_phieutra', title: 'Số sách', render: (v) => Array.isArray(v) ? v.length : '—' },
+    {
+      key: 'actions', title: '',
+      render: (_, row) => (
+        <button
+          onClick={() => openDetail(row)}
+          className="p-1.5 text-gray-500 hover:bg-gray-100 rounded"
+          title="Xem chi tiết phiếu trả"
+        >
+          <Eye size={14} />
+        </button>
+      ),
+    },
   ];
 
   return (
@@ -833,7 +896,132 @@ const PhieuTraTab = () => {
           </Button>
         </div>
       </Modal>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          MODAL: Chi tiết phiếu trả (với Snapshot)
+      ══════════════════════════════════════════════════════════════════════ */}
+      <Modal
+        isOpen={detailModal.open}
+        onClose={() => setDetailModal({ open: false, data: null })}
+        title={`Chi tiết Phiếu Trả${detailModal.data ? ` #${detailModal.data.maphieutra}` : ''}`}
+        size="lg"
+      >
+        {loadingDetail ? (
+          <div className="flex justify-center py-10">
+            <div className="animate-spin h-7 w-7 rounded-full border-b-2 border-indigo-600" />
+          </div>
+        ) : detailModal.data ? (
+          <PhieuTraDetailContent data={detailModal.data} />
+        ) : null}
+        <div className="flex justify-end mt-5">
+          <Button variant="secondary" onClick={() => setDetailModal({ open: false, data: null })}>
+            Đóng
+          </Button>
+        </div>
+      </Modal>
     </>
+  );
+};
+
+/* ─── Chi tiết phiếu trả (Snapshot) ─────────────────────────────────────────── */
+const PhieuTraDetailContent = ({ data }) => {
+  const books = data.ct_phieutra || [];
+  const hasOverdue = books.some((b) => (b.songaytratre ?? 0) > 0);
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="bg-gray-50 rounded-lg px-3 py-2.5 space-y-1.5">
+          <p className="text-gray-500">Mã phiếu trả</p>
+          <p className="font-bold text-gray-800 font-mono">#{data.maphieutra}</p>
+        </div>
+        <div className="bg-gray-50 rounded-lg px-3 py-2.5 space-y-1.5">
+          <p className="text-gray-500">Ngày trả</p>
+          <p className="font-semibold text-gray-800">{formatDate(data.ngaytra)}</p>
+        </div>
+        <div className="bg-gray-50 rounded-lg px-3 py-2.5 space-y-1.5">
+          <p className="text-gray-500">Độc giả</p>
+          <p className="font-medium text-gray-800">
+            <span className="text-indigo-600 font-mono">#{data.madocgia}</span>{' '}
+            {data.docgia?.hoten}
+          </p>
+          {data.docgia?.email && (
+            <p className="text-xs text-gray-400">{data.docgia.email}</p>
+          )}
+        </div>
+        <div className="bg-gray-50 rounded-lg px-3 py-2.5 space-y-1.5">
+          <p className="text-gray-500">Tổng tiền phạt</p>
+          {data.tienphatkynay > 0 ? (
+            <p className="font-bold text-red-600 text-lg">{formatCurrency(data.tienphatkynay)}</p>
+          ) : (
+            <p className="font-semibold text-green-600">Không có phạt</p>
+          )}
+        </div>
+      </div>
+
+      {/* Danh sách sách trả — snapshot */}
+      <div>
+        <p className="text-sm font-semibold text-gray-700 mb-2">
+          Sách đã trả ({books.length} cuốn)
+          <span className="ml-2 text-xs font-normal text-gray-400">
+            — thông tin tại thời điểm mượn
+          </span>
+        </p>
+        {books.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-4">Không có sách nào</p>
+        ) : (
+          <div className="border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
+            {books.map((b) => {
+              const title = b.tentuasach_snapshot || b.sach?.tuasach?.tentuasach || `Sách #${b.masach}`;
+              const anhBia = b.anhbia_snapshot    || b.sach?.tuasach?.anhbia     || null;
+              const nhaxb  = b.nhaxb_snapshot     || b.sach?.nhaxb               || '—';
+              const namxb  = b.namxb_snapshot     || b.sach?.namxb               || '—';
+              const overdue = b.songaytratre ?? 0;
+              const fine    = b.tienphat ?? 0;
+              return (
+                <div key={b.masach} className="flex items-center gap-3 px-3 py-2.5">
+                  <img
+                    src={anhBia || `https://placehold.co/32x46/e2e8f0/94a3b8?text=S`}
+                    alt=""
+                    className="w-9 h-12 object-cover rounded border border-gray-200 flex-shrink-0"
+                    onError={(e) => { e.target.src = `https://placehold.co/32x46/e2e8f0/94a3b8?text=S`; }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 leading-tight line-clamp-2">{title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {nhaxb} · {namxb} · Mã sách <span className="font-mono">#{b.masach}</span>
+                    </p>
+                    {overdue > 0 && (
+                      <p className="text-xs text-red-500 mt-0.5">Trễ {overdue} ngày</p>
+                    )}
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    {fine > 0 ? (
+                      <span className="text-xs font-semibold text-red-600">{formatCurrency(fine)}</span>
+                    ) : (
+                      <span className="text-xs text-green-600">0 đ</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Snapshot note */}
+      <p className="text-xs text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
+        🔒 Thông tin sách hiển thị là <strong>snapshot</strong> tại thời điểm lập phiếu mượn —
+        không bị ảnh hưởng khi sách được chỉnh sửa sau đó.
+      </p>
+
+      {hasOverdue && (
+        <p className="text-xs bg-red-50 border border-red-100 text-red-700 rounded-lg px-3 py-2">
+          ⚠️ Một hoặc nhiều cuốn sách được trả trễ hạn. Tiền phạt đã được ghi vào tài khoản độc giả.
+        </p>
+      )}
+    </div>
   );
 };
 
