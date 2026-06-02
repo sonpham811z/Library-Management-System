@@ -186,7 +186,7 @@ export const CategoriesPage = () => {
           </Button>
 
           <Button onClick={handleSave} loading={saving}>
-            {modal.mode === "create" ? "Thêm" : "Lưu"}
+            {modal.mode === "create" ? "Thêm thể loại" : "Lưu"}
           </Button>
         </div>
       </Modal>

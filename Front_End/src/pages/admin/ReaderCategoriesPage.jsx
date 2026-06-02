@@ -209,7 +209,7 @@ export const ReaderCategoriesPage = () => {
           </Button>
 
           <Button onClick={handleSave} loading={saving}>
-            {modal.mode === "create" ? "Thêm" : "Lưu thay đổi"}
+            {modal.mode === "create" ? "Thêm loại độc giả" : "Lưu thay đổi"}
           </Button>
         </div>
       </Modal>
