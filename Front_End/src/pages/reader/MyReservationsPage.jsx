@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { datchoApi } from '../../api/datcho.api';
 import { Button } from '../../components/common/Button';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { formatDate } from '../../utils/format';
 import toast from 'react-hot-toast';
 
@@ -178,6 +179,7 @@ export const MyReservationsPage = () => {
   const [loading, setLoading]           = useState(true);
   const [cancelling, setCancelling]     = useState(null);
   const [tab, setTab]                   = useState('active'); // 'active' | 'history'
+  const [confirmModal, setConfirmModal] = useState({ open: false, madatcho: null });
 
   const fetchMy = useCallback(() => {
     setLoading(true);
@@ -189,8 +191,13 @@ export const MyReservationsPage = () => {
 
   useEffect(() => { fetchMy(); }, [fetchMy]);
 
-  const handleCancel = async (madatcho) => {
-    if (!window.confirm('Hủy lượt đặt trước này?')) return;
+  const handleCancel = (madatcho) => {
+    setConfirmModal({ open: true, madatcho });
+  };
+
+  const confirmCancel = async () => {
+    const { madatcho } = confirmModal;
+    setConfirmModal({ open: false, madatcho: null });
     setCancelling(madatcho);
     try {
       await datchoApi.cancel(madatcho);
@@ -284,6 +291,16 @@ export const MyReservationsPage = () => {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, madatcho: null })}
+        onConfirm={confirmCancel}
+        title="Hủy đặt trước"
+        message="Bạn có chắc muốn hủy lượt đặt trước này?"
+        confirmLabel="Hủy đặt trước"
+        variant="warning"
+      />
     </div>
   );
 };

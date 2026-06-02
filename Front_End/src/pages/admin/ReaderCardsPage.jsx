@@ -6,6 +6,7 @@ import { nguoidungApi } from '../../api/nguoidung.api';
 import { Table, Pagination } from '../../components/common/Table';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { Input, Select } from '../../components/common/Input';
 import { formatDate, formatCurrency } from '../../utils/format';
 import toast from 'react-hot-toast';
@@ -29,6 +30,7 @@ export const ReaderCardsPage = () => {
   const [modal, setModal] = useState({ open: false, mode: 'create', data: null });
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, target: null });
 
   // Load reader types and user list once
   useEffect(() => {
@@ -117,11 +119,15 @@ export const ReaderCardsPage = () => {
     }
   };
 
-  const handleDelete = async (r) => {
-    if (!window.confirm(`Xóa thẻ độc giả "${r.hoten}"?`)) return;
+  const handleDelete = (r) => {
+    setConfirmModal({ open: true, target: r });
+  };
+
+  const confirmDelete = async () => {
     try {
-      await docgiaApi.remove(r.madocgia);
+      await docgiaApi.remove(confirmModal.target.madocgia);
       toast.success('Đã xóa độc giả');
+      setConfirmModal({ open: false, target: null });
       fetchReaders(pagination.page);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
@@ -221,6 +227,15 @@ export const ReaderCardsPage = () => {
 
       <Table columns={columns} data={readers} loading={loading} />
       <Pagination page={pagination.page} totalPages={pagination.totalPages} onPageChange={fetchReaders} />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, target: null })}
+        onConfirm={confirmDelete}
+        title="Xóa thẻ độc giả"
+        message={`Bạn có chắc muốn xóa thẻ độc giả "${confirmModal.target?.hoten}"?`}
+        confirmLabel="Xóa"
+      />
 
       <Modal
         isOpen={modal.open}

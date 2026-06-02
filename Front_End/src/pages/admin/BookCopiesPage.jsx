@@ -21,6 +21,7 @@ import { phieunhapApi } from "../../api/phieunhap.api";
 import { Table, Pagination } from "../../components/common/Table";
 import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
+import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { Input } from "../../components/common/Input";
 import { AutocompleteInput } from "../../components/common/AutocompleteInput";
 import { formatDate, formatCurrency } from "../../utils/format";
@@ -58,6 +59,7 @@ const BanSaoSachTab = ({ onOpenImport }) => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [confirmModal, setConfirmModal] = useState({ open: false, target: null });
 
   const debouncedSearch = useDebounce(search, 400);
 
@@ -89,14 +91,18 @@ const BanSaoSachTab = ({ onOpenImport }) => {
     fetchAll();
   }, [fetchAll]);
 
-  const handleDelete = async (row) => {
-    if (!window.confirm(`Xóa bản sao #${row.masach}?`)) return;
+  const handleDelete = (row) => {
+    setConfirmModal({ open: true, target: row });
+  };
+
+  const confirmDelete = async () => {
     try {
-      await sachApi.remove(row.masach);
+      await sachApi.remove(confirmModal.target.masach);
       toast.success("Đã xóa bản sao thành công");
+      setConfirmModal({ open: false, target: null });
       fetchAll(pagination.page);
     } catch {
-      toast.error("Lỗi khi xóa bản in sách");
+      toast.error("Lỗi khi xóa bản sao sách");
     }
   };
 
@@ -189,6 +195,15 @@ const BanSaoSachTab = ({ onOpenImport }) => {
         page={pagination.page}
         totalPages={pagination.totalPages}
         onPageChange={fetchAll}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, target: null })}
+        onConfirm={confirmDelete}
+        title="Xóa bản sao"
+        message={`Bạn có chắc muốn xóa bản sao #${confirmModal.target?.masach}?`}
+        confirmLabel="Xóa"
       />
     </div>
   );

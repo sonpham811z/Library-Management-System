@@ -4,6 +4,7 @@ import { loaidocgiaApi } from "../../api/loaidocgia.api";
 import { Table, Pagination } from "../../components/common/Table";
 import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
+import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { Input } from "../../components/common/Input";
 import toast from "react-hot-toast";
 
@@ -29,6 +30,7 @@ export const ReaderCategoriesPage = () => {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, target: null });
 
   const fetchData = useCallback(async (page = 1) => {
     setLoading(true);
@@ -112,13 +114,15 @@ export const ReaderCategoriesPage = () => {
     }
   };
 
-  const handleDelete = async (item) => {
-    if (!window.confirm(`Xóa "${item.tenloaidocgia}" ?`)) return;
+  const handleDelete = (item) => {
+    setConfirmModal({ open: true, target: item });
+  };
 
+  const confirmDelete = async () => {
     try {
-      await loaidocgiaApi.remove(item.maloaidocgia);
-
+      await loaidocgiaApi.remove(confirmModal.target.maloaidocgia);
       toast.success("Đã xóa loại độc giả");
+      setConfirmModal({ open: false, target: null });
       fetchData(pagination.page);
     } catch (err) {
       toast.error(err.response?.data?.message || "Không thể xóa");
@@ -176,6 +180,15 @@ export const ReaderCategoriesPage = () => {
         page={pagination.page}
         totalPages={pagination.totalPages}
         onPageChange={fetchData}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, target: null })}
+        onConfirm={confirmDelete}
+        title="Xóa loại độc giả"
+        message={`Bạn có chắc muốn xóa loại độc giả "${confirmModal.target?.tenloaidocgia}"?`}
+        confirmLabel="Xóa"
       />
 
       <Modal

@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { AiChatWidget } from "../ai/AiChatWidget";
+import { useAuth } from "../../hooks/useAuth";
 
 const PAGE_TITLES = {
   // Admin paths
@@ -41,6 +42,7 @@ export const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const { pathname } = useLocation();
   const title = PAGE_TITLES[pathname] || "Thư viện";
+  const { isReader } = useAuth();
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -51,7 +53,7 @@ export const MainLayout = () => {
           <Outlet />
         </main>
       </div>
-      <AiChatWidget />
+      {isReader && <AiChatWidget />}
     </div>
   );
 };

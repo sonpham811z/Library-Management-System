@@ -4,6 +4,7 @@ import { theloaiApi } from "../../api/theloai.api";
 import { Table, Pagination } from "../../components/common/Table";
 import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
+import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { Input } from "../../components/common/Input";
 import toast from "react-hot-toast";
 
@@ -26,6 +27,7 @@ export const CategoriesPage = () => {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, target: null });
 
   const fetchCategories = useCallback(async (page = 1) => {
     setLoading(true);
@@ -97,12 +99,15 @@ export const CategoriesPage = () => {
     }
   };
 
-  const handleDelete = async (category) => {
-    if (!window.confirm(`Xóa thể loại "${category.tentheloai}" ?`)) return;
+  const handleDelete = (category) => {
+    setConfirmModal({ open: true, target: category });
+  };
 
+  const confirmDelete = async () => {
     try {
-      await theloaiApi.remove(category.matheloai);
+      await theloaiApi.remove(confirmModal.target.matheloai);
       toast.success("Đã xóa thể loại");
+      setConfirmModal({ open: false, target: null });
       fetchCategories(pagination.page);
     } catch (err) {
       toast.error(err.response?.data?.message || "Có lỗi xảy ra");
@@ -160,6 +165,15 @@ export const CategoriesPage = () => {
         page={pagination.page}
         totalPages={pagination.totalPages}
         onPageChange={handlePageChange}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, target: null })}
+        onConfirm={confirmDelete}
+        title="Xóa thể loại"
+        message={`Bạn có chắc muốn xóa thể loại "${confirmModal.target?.tentheloai}"?`}
+        confirmLabel="Xóa"
       />
 
       <Modal

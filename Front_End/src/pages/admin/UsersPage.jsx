@@ -5,6 +5,7 @@ import { nhomnguoidungApi } from '../../api/nhomnguoidung.api';
 import { Table, Pagination } from '../../components/common/Table';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { Input, Select } from '../../components/common/Input';
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
@@ -20,6 +21,7 @@ export const UsersPage = () => {
   const [modal, setModal] = useState({ open: false, mode: 'create', data: null });
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, target: null });
 
   // Load groups once
   useEffect(() => {
@@ -85,11 +87,15 @@ export const UsersPage = () => {
     }
   };
 
-  const handleDelete = async (u) => {
-    if (!window.confirm(`Xóa tài khoản "${u.tendangnhap}"?`)) return;
+  const handleDelete = (u) => {
+    setConfirmModal({ open: true, target: u });
+  };
+
+  const confirmDelete = async () => {
     try {
-      await nguoidungApi.remove(u.manguoidung);
+      await nguoidungApi.remove(confirmModal.target.manguoidung);
       toast.success('Đã xóa tài khoản');
+      setConfirmModal({ open: false, target: null });
       fetchUsers(pagination.page);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
@@ -170,6 +176,15 @@ export const UsersPage = () => {
         page={pagination.page}
         totalPages={pagination.totalPages}
         onPageChange={fetchUsers}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, target: null })}
+        onConfirm={confirmDelete}
+        title="Xóa tài khoản"
+        message={`Bạn có chắc muốn xóa tài khoản "${confirmModal.target?.tendangnhap}"?`}
+        confirmLabel="Xóa"
       />
 
       <Modal

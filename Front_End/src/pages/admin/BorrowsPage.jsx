@@ -15,6 +15,7 @@ import {
   Plus, Search, BookOpen, RotateCcw, X, User,
   Eye, Edit2, Trash2, Calendar, AlertTriangle,
 } from 'lucide-react';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { phieumuonApi } from '../../api/phieumuon.api';
 import { phieutraApi }  from '../../api/phieutra.api';
 import { docgiaApi }    from '../../api/docgia.api';
@@ -73,6 +74,9 @@ const PhieuMuonTab = () => {
   // ── Modal Sửa hạn trả ──────────────────────────────────────────────────────
   const [editModal, setEditModal] = useState({ open: false, data: null, hantra: '' });
   const [savingEdit, setSavingEdit] = useState(false);
+
+  // ── Modal Xóa phiếu mượn ───────────────────────────────────────────────────
+  const [confirmModal, setConfirmModal] = useState({ open: false, row: null });
 
   // ─── Tải danh sách ─────────────────────────────────────────────────────────
   const fetchAll = useCallback(async (page = 1) => {
@@ -201,17 +205,15 @@ const PhieuMuonTab = () => {
   };
 
   // ─── Xóa phiếu mượn ───────────────────────────────────────────────────────
-  const handleDelete = async (row) => {
-    const status = slipStatus(row);
-    const warnMsg = status?.label === 'Đang mượn' || status?.label === 'Quá hạn'
-      ? '\n⚠️ Phiếu này còn sách chưa trả — sách sẽ được đặt lại trạng thái "Có sẵn".'
-      : '';
-    if (!window.confirm(
-      `Xóa phiếu mượn #${row.maphieumuon}?\nĐộc giả: ${row.docgia?.hoten || '—'}${warnMsg}`
-    )) return;
+  const handleDelete = (row) => {
+    setConfirmModal({ open: true, row });
+  };
+
+  const confirmDelete = async () => {
     try {
-      await phieumuonApi.remove(row.maphieumuon);
+      await phieumuonApi.remove(confirmModal.row.maphieumuon);
       toast.success('Đã xóa phiếu mượn');
+      setConfirmModal({ open: false, row: null });
       fetchAll(pagination.page);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Không thể xóa phiếu mượn');
@@ -310,6 +312,23 @@ const PhieuMuonTab = () => {
 
       <Table columns={columns} data={rows} loading={loading} />
       <Pagination page={pagination.page} totalPages={pagination.totalPages} onPageChange={fetchAll} />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, row: null })}
+        onConfirm={confirmDelete}
+        title="Xóa phiếu mượn"
+        message={(() => {
+          const row = confirmModal.row;
+          if (!row) return '';
+          const status = slipStatus(row);
+          const warn = status?.label === 'Đang mượn' || status?.label === 'Quá hạn'
+            ? '\n⚠️ Phiếu còn sách chưa trả — sách sẽ được đặt lại trạng thái "Có sẵn".'
+            : '';
+          return `Xóa phiếu mượn #${row.maphieumuon}?\nĐộc giả: ${row.docgia?.hoten || '—'}${warn}`;
+        })()}
+        confirmLabel="Xóa"
+      />
 
       {/* ══════════════════════════════════════════════════════════════════════
           MODAL: Lập phiếu mượn mới

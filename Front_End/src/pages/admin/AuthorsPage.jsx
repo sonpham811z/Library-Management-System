@@ -4,6 +4,7 @@ import { tacgiaApi } from "../../api/tacgia.api";
 import { Table, Pagination } from "../../components/common/Table";
 import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
+import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { Input } from "../../components/common/Input";
 import toast from "react-hot-toast";
 
@@ -28,6 +29,7 @@ export const AuthorsPage = () => {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, target: null });
 
   const fetchAuthors = useCallback(async (page = 1) => {
     setLoading(true);
@@ -110,16 +112,15 @@ export const AuthorsPage = () => {
     }
   };
 
-  const handleDelete = async (author) => {
-    if (!window.confirm(`Xóa tác giả "${author.tentacgia}"?`)) {
-      return;
-    }
+  const handleDelete = (author) => {
+    setConfirmModal({ open: true, target: author });
+  };
 
+  const confirmDelete = async () => {
     try {
-      await tacgiaApi.remove(author.matacgia);
-
+      await tacgiaApi.remove(confirmModal.target.matacgia);
       toast.success("Đã xóa tác giả");
-
+      setConfirmModal({ open: false, target: null });
       fetchAuthors(pagination.page);
     } catch (err) {
       toast.error(err.response?.data?.message || "Có lỗi xảy ra");
@@ -181,6 +182,15 @@ export const AuthorsPage = () => {
         page={pagination.page}
         totalPages={pagination.totalPages}
         onPageChange={fetchAuthors}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, target: null })}
+        onConfirm={confirmDelete}
+        title="Xóa tác giả"
+        message={`Bạn có chắc muốn xóa tác giả "${confirmModal.target?.tentacgia}"?`}
+        confirmLabel="Xóa"
       />
 
       <Modal

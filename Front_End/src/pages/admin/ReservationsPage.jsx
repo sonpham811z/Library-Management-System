@@ -7,6 +7,7 @@ import { datchoApi } from '../../api/datcho.api';
 import { Table, Pagination } from '../../components/common/Table';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
+import { ConfirmModal as ConfirmDialogModal } from '../../components/common/ConfirmModal';
 import { formatDate } from '../../utils/format';
 import toast from 'react-hot-toast';
 
@@ -183,8 +184,9 @@ export const ReservationsPage = () => {
   const [statusFilter, setStatusFilter] = useState('Tất cả');
   const [autoCancelling, setAutoCancelling] = useState(false);
 
-  const [confirmTarget, setConfirmTarget] = useState(null);
-  const [cancelTarget, setCancelTarget]   = useState(null);
+  const [confirmTarget, setConfirmTarget]   = useState(null);
+  const [cancelTarget, setCancelTarget]     = useState(null);
+  const [autoCancelConfirm, setAutoCancelConfirm] = useState(false);
 
   const fetchAll = useCallback(async (page = 1, status = statusFilter) => {
     setLoading(true);
@@ -204,8 +206,12 @@ export const ReservationsPage = () => {
 
   useEffect(() => { fetchAll(1, statusFilter); }, [statusFilter]);
 
-  const handleAutoCancel = async () => {
-    if (!window.confirm('Tự động hủy tất cả lượt giữ sách đã hết hạn?')) return;
+  const handleAutoCancel = () => {
+    setAutoCancelConfirm(true);
+  };
+
+  const confirmAutoCancel = async () => {
+    setAutoCancelConfirm(false);
     setAutoCancelling(true);
     try {
       const { data } = await datchoApi.autoCancelExpired();
@@ -401,6 +407,16 @@ export const ReservationsPage = () => {
           onCancelled={() => { setCancelTarget(null); fetchAll(1, statusFilter); }}
         />
       )}
+
+      <ConfirmDialogModal
+        isOpen={autoCancelConfirm}
+        onClose={() => setAutoCancelConfirm(false)}
+        onConfirm={confirmAutoCancel}
+        title="Hủy lượt hết hạn"
+        message="Tự động hủy tất cả lượt giữ sách đã hết hạn? Sách sẽ được trả về kho hoặc giao cho người xếp hàng tiếp theo."
+        confirmLabel="Xác nhận hủy"
+        variant="warning"
+      />
     </div>
   );
 };

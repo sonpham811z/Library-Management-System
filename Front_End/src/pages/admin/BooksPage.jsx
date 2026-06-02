@@ -7,6 +7,7 @@ import { tacgiaApi } from '../../api/tacgia.api';
 import { Table, Pagination } from '../../components/common/Table';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { Input, Select } from '../../components/common/Input';
 import { formatDate, formatCurrency } from '../../utils/format';
 import toast from 'react-hot-toast';
@@ -76,6 +77,8 @@ export const BooksPage = () => {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkResult, setBulkResult]   = useState(null); // { insertedCount, skippedCount, errors[] }
   const fileInputRef                  = useRef(null);
+
+  const [confirmModal, setConfirmModal] = useState({ open: false, type: null, target: null });
 
   // ─── Load lookup data once ─────────────────────────────────────────────────
   useEffect(() => {
@@ -192,15 +195,8 @@ export const BooksPage = () => {
     }
   };
 
-  const handleDeleteTitle = async (row) => {
-    if (!window.confirm(`Bạn có chắc muốn xóa tựa sách "${row.tentuasach}"?`)) return;
-    try {
-      await tuasachApi.remove(row.matuasach);
-      toast.success('Đã xóa tựa sách');
-      fetchTitles(pagination.page);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Không thể xóa');
-    }
+  const handleDeleteTitle = (row) => {
+    setConfirmModal({ open: true, type: 'title', target: row });
   };
 
   // ─── SACH copies management ────────────────────────────────────────────────
@@ -278,12 +274,24 @@ export const BooksPage = () => {
     }
   };
 
-  const handleDeleteSach = async (s) => {
-    if (!window.confirm(`Xóa bản sao #${s.masach}?`)) return;
+  const handleDeleteSach = (s) => {
+    setConfirmModal({ open: true, type: 'sach', target: s });
+  };
+
+  const confirmDelete = async () => {
+    const { type, target } = confirmModal;
     try {
-      await sachApi.remove(s.masach);
-      toast.success('Đã xóa bản sao');
-      setSachList((prev) => prev.filter((x) => x.masach !== s.masach));
+      if (type === 'title') {
+        await tuasachApi.remove(target.matuasach);
+        toast.success('Đã xóa tựa sách');
+        setConfirmModal({ open: false, type: null, target: null });
+        fetchTitles(pagination.page);
+      } else {
+        await sachApi.remove(target.masach);
+        toast.success('Đã xóa bản sao');
+        setConfirmModal({ open: false, type: null, target: null });
+        setSachList((prev) => prev.filter((x) => x.masach !== target.masach));
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Không thể xóa');
     }
@@ -461,6 +469,19 @@ export const BooksPage = () => {
       {/* ── TUASACH Table ── */}
       <Table columns={columns} data={titles} loading={loading} />
       <Pagination page={pagination.page} totalPages={pagination.totalPages} onPageChange={fetchTitles} />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, type: null, target: null })}
+        onConfirm={confirmDelete}
+        title={confirmModal.type === 'title' ? 'Xóa tựa sách' : 'Xóa bản sao'}
+        message={
+          confirmModal.type === 'title'
+            ? `Bạn có chắc muốn xóa tựa sách "${confirmModal.target?.tentuasach}"?`
+            : `Bạn có chắc muốn xóa bản sao #${confirmModal.target?.masach}?`
+        }
+        confirmLabel="Xóa"
+      />
 
       {/* ══════════════════════════════════════════════════════════════════════
           MODAL 1: Create / Edit TUASACH
