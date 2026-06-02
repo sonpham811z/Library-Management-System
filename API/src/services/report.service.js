@@ -251,4 +251,131 @@ const getOverdueReport = async (from, to) => {
     });
 };
 
-module.exports = { generateMuonSach, generateSachTraTre, getDashboardStats, getBorrowByCategory, getOverdueReport };
+// ─── 6. REVENUE (doanh thu tiền phạt) ────────────────────────────────────────
+
+const getRevenue = async ({ type, date, month, year }) => {
+  let from, to;
+
+  if (type === 'day') {
+    if (!date) throw new Error('date là bắt buộc khi type=day');
+    from = date;
+    to = date;
+  } else if (type === 'month') {
+    if (!month || !year) throw new Error('month và year là bắt buộc khi type=month');
+    const mm = String(month).padStart(2, '0');
+    const lastDay = new Date(year, month, 0).getDate();
+    from = `${year}-${mm}-01`;
+    to   = `${year}-${mm}-${String(lastDay).padStart(2, '0')}`;
+  } else if (type === 'year') {
+    if (!year) throw new Error('year là bắt buộc khi type=year');
+    from = `${year}-01-01`;
+    to   = `${year}-12-31`;
+  } else {
+    throw new Error('type phải là day, month hoặc year');
+  }
+
+  const { data, error } = await supabase
+    .from('phieuthutienphat')
+    .select('ngaythu, sotienthu')
+    .gte('ngaythu', from)
+    .lte('ngaythu', to);
+  if (error) throw error;
+  const rows = data || [];
+
+  // Build ordered labels
+  let labels = [];
+  if (type === 'day') {
+    labels = [date];
+  } else if (type === 'month') {
+    const lastDay = new Date(year, month, 0).getDate();
+    for (let i = 1; i <= lastDay; i++) labels.push(String(i).padStart(2, '0'));
+  } else {
+    for (let i = 1; i <= 12; i++) labels.push(`${i}/${year}`);
+  }
+
+  // Aggregate by label key
+  const map = {};
+  for (const row of rows) {
+    let key;
+    if (type === 'day') {
+      key = row.ngaythu;
+    } else if (type === 'month') {
+      key = row.ngaythu.split('-')[2]; // "DD"
+    } else {
+      const m = parseInt(row.ngaythu.split('-')[1], 10);
+      key = `${m}/${year}`;
+    }
+    map[key] = (map[key] || 0) + Number(row.sotienthu);
+  }
+
+  const chartData = labels.map((label) => ({ label, amount: map[label] || 0 }));
+  const total = rows.reduce((s, r) => s + Number(r.sotienthu), 0);
+  return { total, chartData };
+};
+
+// ─── 7. BORROW TREND (by day / month / year) ─────────────────────────────────
+
+const getBorrowTrend = async ({ type, from, to, year }) => {
+  let rows, chartData;
+
+  if (type === 'day') {
+    if (!from || !to) throw new Error('from và to là bắt buộc khi type=day');
+    const { data, error } = await supabase
+      .from('phieumuon').select('ngaymuon')
+      .gte('ngaymuon', from).lte('ngaymuon', to);
+    if (error) throw error;
+    rows = data || [];
+
+    const map = {};
+    const start = new Date(from + 'T00:00:00');
+    const end   = new Date(to   + 'T00:00:00');
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      map[d.toISOString().split('T')[0]] = 0;
+    }
+    for (const r of rows) {
+      if (map[r.ngaymuon] !== undefined) map[r.ngaymuon]++;
+    }
+    chartData = Object.entries(map).map(([date, count]) => {
+      const [, m, d] = date.split('-');
+      return { label: `${d}/${m}`, count };
+    });
+
+  } else if (type === 'month') {
+    if (!year) throw new Error('year là bắt buộc khi type=month');
+    const { data, error } = await supabase
+      .from('phieumuon').select('ngaymuon')
+      .gte('ngaymuon', `${year}-01-01`).lte('ngaymuon', `${year}-12-31`);
+    if (error) throw error;
+    rows = data || [];
+
+    const map = {};
+    for (let m = 1; m <= 12; m++) map[m] = 0;
+    for (const r of rows) {
+      const m = parseInt(r.ngaymuon.split('-')[1], 10);
+      if (map[m] !== undefined) map[m]++;
+    }
+    chartData = Object.entries(map).map(([m, count]) => ({ label: `T${m}`, count: +count }));
+
+  } else if (type === 'year') {
+    const { data, error } = await supabase.from('phieumuon').select('ngaymuon');
+    if (error) throw error;
+    rows = data || [];
+
+    const map = {};
+    for (const r of rows) {
+      const y = r.ngaymuon.split('-')[0];
+      map[y] = (map[y] || 0) + 1;
+    }
+    chartData = Object.entries(map)
+      .sort(([a], [b]) => +a - +b)
+      .map(([label, count]) => ({ label, count }));
+
+  } else {
+    throw new Error('type phải là day, month hoặc year');
+  }
+
+  const total = chartData.reduce((s, r) => s + r.count, 0);
+  return { total, chartData };
+};
+
+module.exports = { generateMuonSach, generateSachTraTre, getDashboardStats, getBorrowByCategory, getOverdueReport, getRevenue, getBorrowTrend };

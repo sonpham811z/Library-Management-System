@@ -112,7 +112,7 @@ const update = async (req, res, next) => {
     if (ngaynhap !== undefined) payload.ngaynhap = ngaynhap;
     if (trigia !== undefined) payload.trigia = +trigia;
     if (trangthai !== undefined) {
-      const VALID = ["Có sẵn", "Đã mượn"];
+      const VALID = ["Có sẵn", "Đã mượn", "Đang giữ chỗ"];
       if (!VALID.includes(trangthai)) {
         return sendError(
           res,

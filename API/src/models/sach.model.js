@@ -131,6 +131,15 @@ const setTrangThai = async (maSach, trangThai) => {
 };
 
 const remove = async (maSach) => {
+  const { data: history, error: checkErr } = await supabase
+    .from('ct_phieumuon')
+    .select('maphieumuon')
+    .eq('masach', maSach)
+    .limit(1)
+    .maybeSingle();
+  if (checkErr) throw checkErr;
+  if (history) throw new Error('Không thể xóa bản sao vì tồn tại lịch sử mượn');
+
   const { error } = await supabase.from(TABLE).delete().eq('masach', maSach);
   if (error) throw error;
 };

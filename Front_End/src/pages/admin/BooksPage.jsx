@@ -193,7 +193,7 @@ export const BooksPage = () => {
   };
 
   const handleDeleteTitle = async (row) => {
-    if (!window.confirm(`Xóa tựa sách "${row.tentuasach}"?\nTất cả bản sao sách (SACH) cũng sẽ bị xóa.`)) return;
+    if (!window.confirm(`Bạn có chắc muốn xóa tựa sách "${row.tentuasach}"?`)) return;
     try {
       await tuasachApi.remove(row.matuasach);
       toast.success('Đã xóa tựa sách');
