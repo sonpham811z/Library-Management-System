@@ -36,7 +36,15 @@ const create = async (req, res, next) => {
     }
 
     // Validate group exists
-    await nhomnguoidungModel.findById(+manhom);
+    const group = await nhomnguoidungModel.findById(+manhom);
+
+    // STAFF can only create READER accounts
+    if (req.user.role === 'STAFF') {
+      const groupName = (group.tennhom || '').toUpperCase();
+      if (groupName === 'ADMIN' || groupName === 'STAFF') {
+        return sendError(res, 'Staff chỉ được tạo tài khoản có nhóm READER', 403);
+      }
+    }
 
     const hashedPassword = await bcrypt.hash(matkhau, 12);
     const newUser = await nguoidungModel.create({

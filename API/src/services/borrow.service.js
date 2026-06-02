@@ -171,6 +171,9 @@ const createPhieuMuon = async (madocgia, masachlist) => {
   const sachWithSnapshots = [];
   for (const maSach of uniqueList) {
     const sach = await sachModel.findById(maSach);
+    if (sach.is_deleted) {
+      throw { statusCode: 409, message: `Sách #${maSach} không tồn tại.` };
+    }
     if (sach.trangthai !== TRANG_THAI_SACH.CO_SAN) {
       throw {
         statusCode: 409,

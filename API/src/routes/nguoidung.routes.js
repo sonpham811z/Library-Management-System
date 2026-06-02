@@ -7,7 +7,7 @@ router.use(authenticate);
 
 router.get('/', c.getAll);
 router.get('/:id', c.getById);
-router.post('/', authorize('ADMIN'), c.create);
+router.post('/', authorize('ADMIN', 'STAFF'), c.create);
 router.put('/:id', authorize('ADMIN'), c.update);
 router.delete('/:id', authorize('ADMIN'), c.remove);
 

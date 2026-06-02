@@ -25,29 +25,73 @@ const findById = async (maPhieuMuon) => {
   return data;
 };
 
-const findAll = async ({ page = 1, limit = 20, maDocGia } = {}) => {
-  let query = supabase
-    .from(TABLE)
-    .select(
-      `maphieumuon, madocgia, ngaymuon, hantra,
-       docgia(hoten),
-       ct_phieumuon(
-         masach,
-         tentuasach_snapshot,
-         anhbia_snapshot,
-         nhaxb_snapshot,
-         namxb_snapshot,
-         sach(matuasach, trangthai, tuasach(tentuasach, anhbia))
-       )`,
-      { count: 'exact' }
-    );
+const SELECT_LIST = `
+  maphieumuon, madocgia, ngaymuon, hantra,
+  docgia(hoten),
+  ct_phieumuon(
+    masach,
+    tentuasach_snapshot,
+    anhbia_snapshot,
+    nhaxb_snapshot,
+    namxb_snapshot,
+    sach(matuasach, trangthai, tuasach(tentuasach, anhbia))
+  )
+`;
 
-  if (maDocGia) query = query.eq('madocgia', maDocGia);
+const computeRowStatus = (row) => {
+  const books = row.ct_phieumuon || [];
+  if (books.length === 0) return null;
+  const allReturned = books.every(
+    (b) => b.sach?.trangthai === 'Có sẵn' || b.sach?.trangthai === 'Đang giữ chỗ'
+  );
+  if (allReturned) return 'Đã trả';
+  if (new Date(row.hantra) < new Date()) return 'Quá hạn';
+  return 'Đang mượn';
+};
 
+const findAll = async ({ page = 1, limit = 20, maDocGia, search, trangThai } = {}) => {
+  // Resolve search: by phieumuon ID (numeric) or by docgia name
+  let phieumuonId = null;
+  let docgiaIds   = null;
+
+  if (search) {
+    const asInt = parseInt(search, 10);
+    if (!isNaN(asInt)) {
+      phieumuonId = asInt;
+    } else {
+      const { data: readers } = await supabase
+        .from('docgia')
+        .select('madocgia')
+        .ilike('hoten', `%${search}%`)
+        .limit(100);
+      docgiaIds = (readers || []).map((r) => r.madocgia);
+      if (docgiaIds.length === 0) return { data: [], count: 0 };
+    }
+  }
+
+  const buildBase = (withCount) => {
+    let q = supabase.from(TABLE).select(SELECT_LIST, withCount ? { count: 'exact' } : undefined);
+    if (maDocGia)        q = q.eq('madocgia', maDocGia);
+    if (phieumuonId !== null) q = q.eq('maphieumuon', phieumuonId);
+    if (docgiaIds)       q = q.in('madocgia', docgiaIds);
+    return q;
+  };
+
+  // When filtering by derived status: fetch all matching rows, filter in JS, paginate manually
+  if (trangThai) {
+    const { data: allData, error } = await buildBase(false).order('maphieumuon', { ascending: false });
+    if (error) throw error;
+    const filtered = (allData || []).filter((row) => computeRowStatus(row) === trangThai);
+    const count    = filtered.length;
+    const from     = (page - 1) * limit;
+    return { data: filtered.slice(from, from + limit), count };
+  }
+
+  // Normal server-side pagination
   const from = (page - 1) * limit;
-  query = query.range(from, from + limit - 1).order('maphieumuon', { ascending: false });
-
-  const { data, error, count } = await query;
+  const { data, error, count } = await buildBase(true)
+    .range(from, from + limit - 1)
+    .order('maphieumuon', { ascending: false });
   if (error) throw error;
   return { data, count };
 };

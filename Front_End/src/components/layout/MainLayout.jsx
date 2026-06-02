@@ -30,6 +30,7 @@ const PAGE_TITLES = {
   "/staff/fines": "Thu tiền phạt",
   "/staff/reports": "Báo cáo",
   "/staff/reservations": "Quản lý Đặt trước",
+  "/staff/users": "Người dùng",
   // Reader paths
   "/my-profile": "Thông tin cá nhân",
   "/search": "Tra cứu Sách",

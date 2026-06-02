@@ -49,6 +49,7 @@ const staffNav = [
   { to: "/staff/reservations",      icon: BookMarked,      label: "Đặt trước" },
   { to: "/staff/fines",             icon: DollarSign,      label: "Thu tiền phạt" },
   { to: "/staff/reports",           icon: BarChart3,       label: "Báo cáo" },
+  { to: "/staff/users",             icon: Users,           label: "Người dùng" },
 ];
 
 const readerNav = [
@@ -98,7 +99,7 @@ export const Sidebar = ({ collapsed, onToggle }) => {
 
       {/* Nav */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto space-y-1">
-        {navItems.map(({ to, icon: Icon, label }) => (
+        {navItems.map(({ to, icon: Icon, label }) => ( // eslint-disable-line no-unused-vars
           <NavLink
             key={to}
             to={to}

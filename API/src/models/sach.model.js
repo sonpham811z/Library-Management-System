@@ -31,7 +31,8 @@ const findAll = async ({ page = 1, limit = 20, maTuaSach, trangThai, search } = 
       const { data, error, count } = await supabase
         .from(TABLE)
         .select('masach, matuasach, namxb, nhaxb, ngaynhap, trigia, trangthai, tuasach(tentuasach, anhbia)', { count: 'exact' })
-        .eq('masach', id);
+        .eq('masach', id)
+        .eq('is_deleted', false);
       if (error) throw error;
       return { data, count };
     }
@@ -47,7 +48,8 @@ const findAll = async ({ page = 1, limit = 20, maTuaSach, trangThai, search } = 
 
   let query = supabase
     .from(TABLE)
-    .select('masach, matuasach, namxb, nhaxb, ngaynhap, trigia, trangthai, tuasach(tentuasach, anhbia)', { count: 'exact' });
+    .select('masach, matuasach, namxb, nhaxb, ngaynhap, trigia, trangthai, tuasach(tentuasach, anhbia)', { count: 'exact' })
+    .eq('is_deleted', false);
 
   if (maTuaSach)   query = query.eq('matuasach', maTuaSach);
   if (trangThai)   query = query.eq('trangthai', trangThai);
@@ -87,6 +89,7 @@ const search = async (q, limit = 15) => {
     .from('sach')
     .select('masach, matuasach, namxb, nhaxb, trangthai, tuasach(tentuasach, anhbia)')
     .eq('trangthai', TRANG_THAI.CO_SAN)
+    .eq('is_deleted', false)
     .limit(limit);
 
   if (orParts.length > 0) query = query.or(orParts.join(','));
@@ -101,7 +104,8 @@ const findAvailableByTuaSach = async (maTuaSach) => {
     .from(TABLE)
     .select('masach, namxb, nhaxb, trigia')
     .eq('matuasach', maTuaSach)
-    .eq('trangthai', TRANG_THAI.CO_SAN);
+    .eq('trangthai', TRANG_THAI.CO_SAN)
+    .eq('is_deleted', false);
   if (error) throw error;
   return data;
 };
@@ -131,16 +135,10 @@ const setTrangThai = async (maSach, trangThai) => {
 };
 
 const remove = async (maSach) => {
-  const { data: history, error: checkErr } = await supabase
-    .from('ct_phieumuon')
-    .select('maphieumuon')
-    .eq('masach', maSach)
-    .limit(1)
-    .maybeSingle();
-  if (checkErr) throw checkErr;
-  if (history) throw new Error('Không thể xóa bản sao vì tồn tại lịch sử mượn');
-
-  const { error } = await supabase.from(TABLE).delete().eq('masach', maSach);
+  const { error } = await supabase
+    .from(TABLE)
+    .update({ is_deleted: true })
+    .eq('masach', maSach);
   if (error) throw error;
 };
 

@@ -35,6 +35,7 @@ import { StaffReservationsPage }     from "./pages/staff/StaffReservationsPage";
 import { StaffAuthorsPage }          from "./pages/staff/StaffAuthorsPage";
 import { StaffCategoriesPage }       from "./pages/staff/StaffCategoriesPage";
 import { StaffReaderCategoriesPage } from "./pages/staff/StaffReaderCategoriesPage";
+import { StaffUsersPage }            from "./pages/staff/StaffUsersPage";
 
 // Reader pages
 import { SearchPage }          from "./pages/reader/SearchPage";
@@ -97,6 +98,7 @@ export default function App() {
             <Route path="reports"           element={<StaffReportsPage />} />
             <Route path="reservations"      element={<StaffReservationsPage />} />
             <Route path="reader-categories" element={<StaffReaderCategoriesPage />} />
+            <Route path="users"             element={<StaffUsersPage />} />
           </Route>
 
           {/* ── READER routes ── */}

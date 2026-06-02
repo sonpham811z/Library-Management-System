@@ -3,13 +3,16 @@ const phieumuonModel = require('../models/phieumuon.model');
 const sachModel      = require('../models/sach.model');
 const { sendSuccess, sendError, sendPaginated } = require('../utils/response');
 
-/** GET /api/phieumuon?page=&limit=&madocgia= */
+/** GET /api/phieumuon?page=&limit=&madocgia=&search=&trangthai= */
 const getAll = async (req, res, next) => {
   try {
-    const { page = 1, limit = 15, madocgia } = req.query;
+    const { page = 1, limit = 15, madocgia, search, trangthai } = req.query;
     const { data, count } = await phieumuonModel.findAll({
-      page: +page, limit: +limit,
-      maDocGia: madocgia ? +madocgia : undefined,
+      page:      +page,
+      limit:     +limit,
+      maDocGia:  madocgia  ? +madocgia  : undefined,
+      search:    search    || undefined,
+      trangThai: trangthai || undefined,
     });
     return sendPaginated(res, data, count, page, limit);
   } catch (err) { next(err); }
